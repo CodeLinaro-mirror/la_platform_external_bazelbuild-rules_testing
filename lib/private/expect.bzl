@@ -23,6 +23,7 @@ load(":expect_meta.bzl", "ExpectMeta")
 load(":file_subject.bzl", "FileSubject")
 load(":int_subject.bzl", "IntSubject")
 load(":str_subject.bzl", "StrSubject")
+load(":struct_subject.bzl", "StructSubject")
 load(":target_subject.bzl", "TargetSubject")
 
 def _expect_new_from_env(env):
@@ -78,6 +79,7 @@ def _expect_new(env, meta):
         that_file = lambda *a, **k: _expect_that_file(self, *a, **k),
         that_int = lambda *a, **k: _expect_that_int(self, *a, **k),
         that_str = lambda *a, **k: _expect_that_str(self, *a, **k),
+        that_struct = lambda *a, **k: _expect_that_struct(self, *a, **k),
         that_target = lambda *a, **k: _expect_that_target(self, *a, **k),
         where = lambda *a, **k: _expect_where(self, *a, **k),
         # keep sorted end
@@ -120,18 +122,19 @@ def _expect_that_bool(self, value, expr = "boolean"):
         meta = self.meta.derive(expr = expr),
     )
 
-def _expect_that_collection(self, collection, expr = "collection"):
+def _expect_that_collection(self, collection, expr = "collection", **kwargs):
     """Creates a subject for asserting collections.
 
     Args:
         self: implicitly added.
         collection: The collection (list or depset) to assert.
         expr: ([`str`]) the starting "value of" expression to report in errors.
+        **kwargs: Additional kwargs to pass onto CollectionSubject.new
 
     Returns:
         [`CollectionSubject`] object.
     """
-    return CollectionSubject.new(collection, self.meta.derive(expr))
+    return CollectionSubject.new(collection, self.meta.derive(expr), **kwargs)
 
 def _expect_that_depset_of_files(self, depset_files):
     """Creates a subject for asserting a depset of files.
@@ -206,6 +209,18 @@ def _expect_that_str(self, value):
     """
     return StrSubject.new(value, self.meta.derive("string"))
 
+def _expect_that_struct(self, value):
+    """Creates a subject for asserting a `struct`.
+
+    Args:
+        self: implicitly added.
+        value: ([`struct`]) the value to check against.
+
+    Returns:
+        [`StructSubject`] object.
+    """
+    return StructSubject.new(value, self.meta.derive("string"))
+
 def _expect_that_target(self, target):
     """Creates a subject for asserting a `Target`.
 
@@ -256,6 +271,7 @@ def _expect_where(self, **details):
 # We use this name so it shows up nice in docs.
 # buildifier: disable=name-conventions
 Expect = struct(
+    # keep sorted start
     new_from_env = _expect_new_from_env,
     new = _expect_new,
     that_action = _expect_that_action,
@@ -266,6 +282,8 @@ Expect = struct(
     that_file = _expect_that_file,
     that_int = _expect_that_int,
     that_str = _expect_that_str,
+    that_struct = _expect_that_struct,
     that_target = _expect_that_target,
     where = _expect_where,
+    # keep sorted end
 )
