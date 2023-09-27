@@ -13,10 +13,12 @@
 # limitations under the License.
 
 load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+load("//lib/private:util.bzl", "do_nothing")
 
 licenses(["notice"])
 
 package(
+    default_applicable_licenses = ["//:package_license"],
     default_visibility = ["//visibility:private"],
 )
 
@@ -25,7 +27,10 @@ bzl_library(
     srcs = ["analysis_test.bzl"],
     visibility = ["//visibility:public"],
     deps = [
-        "//lib:truth_bzl",
+        ":test_suite_bzl",
+        ":truth_bzl",
+        "//lib/private:analysis_test_bzl",
+        "//lib/private:util_bzl",
     ],
 )
 
@@ -36,11 +41,13 @@ bzl_library(
     deps = [
         "//lib/private:bool_subject_bzl",
         "//lib/private:collection_subject_bzl",
+        "//lib/private:default_info_subject_bzl",
         "//lib/private:depset_file_subject_bzl",
         "//lib/private:expect_bzl",
         "//lib/private:int_subject_bzl",
         "//lib/private:label_subject_bzl",
         "//lib/private:matching_bzl",
+        "//lib/private:struct_subject_bzl",
     ],
 )
 
@@ -53,6 +60,25 @@ bzl_library(
         "@bazel_skylib//lib:types",
         "@bazel_skylib//lib:unittest",
         "@bazel_skylib//rules:write_file",
+    ],
+)
+
+bzl_library(
+    name = "unit_test_bzl",
+    srcs = ["unit_test.bzl"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//lib/private:analysis_test_bzl",
+    ],
+)
+
+bzl_library(
+    name = "test_suite_bzl",
+    srcs = ["test_suite.bzl"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":unit_test_bzl",
+        "//lib/private:util_bzl",
     ],
 )
 
@@ -79,4 +105,10 @@ exports_files(
     visibility = [
         "//docgen:__pkg__",
     ],
+)
+
+# Unit tests need some target because they're based upon analysis tests.
+do_nothing(
+    name = "_stub_target_for_unit_tests",
+    visibility = ["//visibility:public"],
 )
