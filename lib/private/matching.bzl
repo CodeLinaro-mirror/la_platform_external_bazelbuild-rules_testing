@@ -79,6 +79,37 @@ def _match_file_path_matches(pattern):
         match = lambda f: _match_parts_in_order(f.path, parts),
     )
 
+def _match_file_basename_equals(value):
+    """Match that a `File.basename` string equals `value`.
+
+    Args:
+        value: ([`str`]) the basename to match.
+
+    Returns:
+        [`Matcher`] instance
+    """
+    return struct(
+        desc = "<file basename equals '{}'>".format(value),
+        match = lambda f: f.basename == value,
+    )
+
+def _match_file_extension_in(values):
+    """Match that a `File.extension` string is any of `values`.
+
+    See also: `file_path_matches` for matching extensions that
+    have multiple parts, e.g. `*.tar.gz` or `*.so.*`.
+
+    Args:
+        values: ([`list`] of [`str`]) the extensions to match.
+
+    Returns:
+        [`Matcher`] instance
+    """
+    return struct(
+        desc = "<file extension is any of {}>".format(repr(values)),
+        match = lambda f: f.extension in values,
+    )
+
 def _match_is_in(values):
     """Match that the to-be-matched value is in a collection of other values.
 
@@ -183,6 +214,9 @@ def _match_parts_in_order(string, parts):
             return False
     return True
 
+def _is_matcher(obj):
+    return hasattr(obj, "desc") and hasattr(obj, "match")
+
 # For the definition of a `Matcher` object, see `_match_custom`.
 matching = struct(
     # keep sorted start
@@ -190,11 +224,14 @@ matching = struct(
     custom = _match_custom,
     equals_wrapper = _match_equals_wrapper,
     file_basename_contains = _match_file_basename_contains,
+    file_basename_equals = _match_file_basename_equals,
     file_path_matches = _match_file_path_matches,
+    file_extension_in = _match_file_extension_in,
     is_in = _match_is_in,
     never = _match_never,
     str_endswith = _match_str_endswith,
     str_matches = _match_str_matches,
     str_startswith = _match_str_startswith,
+    is_matcher = _is_matcher,
     # keep sorted end
 )

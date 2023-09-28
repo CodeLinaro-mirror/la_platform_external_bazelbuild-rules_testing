@@ -27,6 +27,11 @@ exports_files(
 )
 
 bzl_library(
+    name = "analysis_test_bzl",
+    srcs = ["analysis_test.bzl"],
+)
+
+bzl_library(
     name = "matching_bzl",
     srcs = ["matching.bzl"],
 )
@@ -58,6 +63,7 @@ bzl_library(
         ":int_subject_bzl",
         ":matching_bzl",
         ":truth_common_bzl",
+        ":util_bzl",
     ],
 )
 
@@ -117,6 +123,16 @@ bzl_library(
     name = "expect_meta_bzl",
     srcs = ["expect_meta.bzl"],
     deps = ["@bazel_skylib//lib:unittest"],
+)
+
+bzl_library(
+    name = "default_info_subject_bzl",
+    srcs = ["default_info_subject.bzl"],
+    deps = [
+        ":depset_file_subject_bzl",
+        ":file_subject_bzl",
+        ":runfiles_subject_bzl",
+    ],
 )
 
 bzl_library(
@@ -210,6 +226,11 @@ bzl_library(
 )
 
 bzl_library(
+    name = "struct_subject_bzl",
+    srcs = ["struct_subject.bzl"],
+)
+
+bzl_library(
     name = "target_subject_bzl",
     srcs = ["target_subject.bzl"],
     deps = [
@@ -241,6 +262,12 @@ bzl_library(
         ":file_subject_bzl",
         ":int_subject_bzl",
         ":str_subject_bzl",
+        ":struct_subject_bzl",
         ":target_subject_bzl",
     ],
+)
+
+bzl_library(
+    name = "util_bzl",
+    srcs = ["util.bzl"],
 )
