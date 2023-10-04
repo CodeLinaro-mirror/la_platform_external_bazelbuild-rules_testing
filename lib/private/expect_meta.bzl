@@ -36,7 +36,7 @@ def _expect_meta_new(env, exprs = [], details = [], format_str_kwargs = None):
     The `env` object basically provides a way to interact with things outside
     of the truth assertions framework. This allows easier testing of the
     framework itself and decouples it from a particular test framework (which
-    makes it usuable by by rules_testing's analysis_test and skylib's
+    makes it usable by by rules_testing's analysis_test and skylib's
     analysistest)
 
     The `env` object requires the following attribute:
@@ -51,7 +51,7 @@ def _expect_meta_new(env, exprs = [], details = [], format_str_kwargs = None):
         provider and returns [`bool`]. This is used to implement `Provider in
         target` operations.
       * get_provider: (callable) it accepts two positional args, target and
-        provider and returns the provder value. This is used to implement
+        provider and returns the provider value. This is used to implement
         `target[Provider]`.
 
     Args:
@@ -77,6 +77,7 @@ def _expect_meta_new(env, exprs = [], details = [], format_str_kwargs = None):
         ctx = env.ctx,
         env = env,
         add_failure = lambda *a, **k: _expect_meta_add_failure(self, *a, **k),
+        current_expr = lambda *a, **k: _expect_meta_current_expr(self, *a, **k),
         derive = lambda *a, **k: _expect_meta_derive(self, *a, **k),
         format_str = lambda *a, **k: _expect_meta_format_str(self, *a, **k),
         get_provider = lambda *a, **k: _expect_meta_get_provider(self, *a, **k),
@@ -233,7 +234,7 @@ def _expect_meta_add_failure(self, problem, actual):
         if detail
     ])
     if details:
-        details = "where...\n" + details
+        details = "where... (most recent context last)\n" + details
     msg = """\
 in test: {test}
 value of: {expr}
@@ -242,12 +243,24 @@ value of: {expr}
 {details}
 """.format(
         test = self.ctx.label,
-        expr = ".".join(self._exprs),
+        expr = _expect_meta_current_expr(self),
         problem = problem,
         actual = actual,
         details = details,
     )
     _expect_meta_call_fail(self, msg)
+
+def _expect_meta_current_expr(self):
+    """Get a string representing the current expression.
+
+    Args:
+        self: implicitly added.
+
+    Returns:
+        [`str`] A string representing the current expression, e.g.
+        "foo.bar(something).baz()"
+    """
+    return ".".join(self._exprs)
 
 def _expect_meta_call_fail(self, msg):
     """Adds a failure to the test run.
