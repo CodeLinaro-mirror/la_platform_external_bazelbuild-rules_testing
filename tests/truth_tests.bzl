@@ -180,7 +180,7 @@ def _bool_subject_test(env, _target):
         fake_env,
         ["expected any of:", "None", "39", "actual: True"],
         env = env,
-        msg = "check is_in mismatchd values",
+        msg = "check is_in mismatched values",
     )
 
     _end(env, fake_env)
@@ -806,6 +806,107 @@ def _collection_not_contains_predicate_test(env, _target):
 
 _suite.append(collection_not_contains_predicate_test)
 
+def collection_offset_test(name):
+    analysis_test(name, impl = _collection_offset_test, target = "truth_tests_helper")
+
+def _collection_offset_test(env, _target):
+    fake_env = _fake_env(env)
+    subject = truth.expect(fake_env).that_collection(["a", "b", "c"])
+
+    offset_value = subject.offset(0, factory = lambda v, meta: v)
+    ut_asserts.true(env, offset_value == "a", "unexpected offset value at 0")
+
+    offset_value = subject.offset(-1, factory = lambda v, meta: v)
+    ut_asserts.true(env, offset_value == "c", "unexpected offset value at -1")
+
+    subject.offset(1, factory = subjects.str).equals("not-b")
+
+    _assert_failure(
+        fake_env,
+        [".offset(1)"],
+        env = env,
+        msg = "offset error message context not found",
+    )
+
+    _end(env, fake_env)
+
+_suite.append(collection_offset_test)
+
+def _collection_transform_test(name):
+    analysis_test(name, impl = _collection_transform_test_impl, target = "truth_tests_helper")
+
+def _collection_transform_test_impl(env, target):
+    _ = target  # @unused
+    fake_env = _fake_env(env)
+    starter = truth.expect(fake_env).that_collection(["alan", "bert", "cari"])
+
+    actual = starter.transform(
+        "values that contain a",
+        filter = lambda v: "a" in v,
+    )
+    actual.contains("not-present")
+    _assert_failure(
+        fake_env,
+        [
+            "transform()",
+            "0: alan",
+            "1: cari",
+            "transform: values that contain a",
+        ],
+        env = env,
+        msg = "transform with lambda filter",
+    )
+
+    actual = starter.transform(filter = matching.contains("b"))
+    actual.contains("not-present")
+    _assert_failure(
+        fake_env,
+        [
+            "0: bert",
+            "transform: filter=<contains b>",
+        ],
+        env = env,
+        msg = "transform with matcher filter",
+    )
+
+    def contains_c(v):
+        return "c" in v
+
+    actual = starter.transform(filter = contains_c)
+    actual.contains("not-present")
+    _assert_failure(
+        fake_env,
+        [
+            "0: cari",
+            "transform: filter=contains_c(...)",
+        ],
+        env = env,
+        msg = "transform with named function filter",
+    )
+
+    actual = starter.transform(
+        "v.upper(); match even offsets",
+        map_each = lambda v: "{}-{}".format(v[0], v[1].upper()),
+        loop = enumerate,
+    )
+    actual.contains("not-present")
+    _assert_failure(
+        fake_env,
+        [
+            "transform()",
+            "0: 0-ALAN",
+            "1: 1-BERT",
+            "2: 2-CARI",
+            "transform: v.upper(); match even offsets",
+        ],
+        env = env,
+        msg = "transform with all args",
+    )
+
+    _end(env, fake_env)
+
+_suite.append(_collection_transform_test)
+
 def execution_info_test(name):
     analysis_test(name, impl = _execution_info_test, target = "truth_tests_helper")
 
@@ -893,6 +994,14 @@ def dict_subject_test(name):
 def _dict_subject_test(env, _target):
     fake_env = _fake_env(env)
     subject = truth.expect(fake_env).that_dict({"a": 1, "b": 2, "c": 3})
+
+    def factory(value, *, meta):
+        return struct(value = value, meta = meta)
+
+    actual = subject.get("a", factory = factory)
+
+    truth.expect(env).that_int(actual.value).equals(1)
+    truth.expect(env).that_collection(actual.meta._exprs).contains("get(a)")
 
     subject.contains_exactly({"a": 1, "b": 2, "c": 3})
     _assert_no_failures(fake_env, env = env)
@@ -1066,46 +1175,6 @@ def _label_subject_test(env, target):
     _end(env, fake_env)
 
 _suite.append(label_subject_test)
-
-def matchers_contains_test(name):
-    analysis_test(name, impl = _matchers_contains_test, target = "truth_tests_helper")
-
-def _matchers_contains_test(env, _target):
-    fake_env = _fake_env(env)
-    ut_asserts.true(env, matching.contains("x").match("YYYxZZZ"))
-    ut_asserts.false(env, matching.contains("x").match("zzzzz"))
-    _end(env, fake_env)
-
-_suite.append(matchers_contains_test)
-
-def matchers_str_matchers_test(name):
-    analysis_test(name, impl = _matchers_str_matchers_test, target = "truth_tests_helper")
-
-def _matchers_str_matchers_test(env, _target):
-    fake_env = _fake_env(env)
-
-    ut_asserts.true(env, matching.str_matches("f*b").match("foobar"))
-    ut_asserts.false(env, matching.str_matches("f*b").match("nope"))
-
-    ut_asserts.true(env, matching.str_endswith("123").match("abc123"))
-    ut_asserts.false(env, matching.str_endswith("123").match("123xxx"))
-
-    ut_asserts.true(env, matching.str_startswith("true").match("truechew"))
-    ut_asserts.false(env, matching.str_startswith("buck").match("notbuck"))
-    _end(env, fake_env)
-
-_suite.append(matchers_str_matchers_test)
-
-def matchers_is_in_test(name):
-    analysis_test(name, impl = _matchers_is_in_test, target = "truth_tests_helper")
-
-def _matchers_is_in_test(env, _target):
-    fake_env = _fake_env(env)
-    ut_asserts.true(env, matching.is_in(["a", "b"]).match("a"))
-    ut_asserts.false(env, matching.is_in(["x", "y"]).match("z"))
-    _end(env, fake_env)
-
-_suite.append(matchers_is_in_test)
 
 def runfiles_subject_test(name):
     analysis_test(name, impl = _runfiles_subject_test, target = "truth_tests_helper")
