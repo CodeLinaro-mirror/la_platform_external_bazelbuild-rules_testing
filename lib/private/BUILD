@@ -23,6 +23,9 @@ package(
 
 config_setting(
     name = "coverage_enabled",
+    flag_values = {
+        "//:skip_analysis_tests_under_coverage": "true",
+    },
     values = {"collect_code_coverage": "true"},
     # Not actually public: only public because its a dependency of public
     # targets

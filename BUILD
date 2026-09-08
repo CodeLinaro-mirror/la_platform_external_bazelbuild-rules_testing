@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 load("@rules_license//rules:license.bzl", "license")
 
 package(
@@ -26,4 +27,10 @@ exports_files(["LICENSE"])
 license(
     name = "package_license",
     package_name = "rules_testing",
+)
+
+bool_flag(
+    name = "skip_analysis_tests_under_coverage",
+    build_setting_default = True,
+    visibility = ["//lib/private:__pkg__"],
 )
